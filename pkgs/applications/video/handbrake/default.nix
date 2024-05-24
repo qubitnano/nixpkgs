@@ -87,6 +87,11 @@
   # FDK
 , useFdk ? false
 , fdk_aac
+  # Intel Quick Sync
+, useQsv ? false
+, libvpl
+, libva
+, libdrm
 }:
 
 let
@@ -137,6 +142,10 @@ let
       "${src}/contrib/ffmpeg/A18-avformat-mov-add-support-audio-fallback-track-ref.patch"
       "${src}/contrib/ffmpeg/A19-mov-ignore-old-infe-box.patch"
       "${src}/contrib/ffmpeg/A20-mov-free-infe-on-failure.patch"
+    ];
+
+    configureFlags = (old.configureFlags or [ ]) ++ optionals useQsv [
+      "--enable-filter=vpp_qsv"
     ];
   });
 
@@ -208,6 +217,10 @@ let
         --replace-fail "gtk-update-icon-cache" "gtk4-update-icon-cache"
       substituteInPlace gtk/data/post_install.py \
         --replace-fail "gtk-update-icon-cache" "gtk4-update-icon-cache"
+    '' + optionalString useQsv ''
+      substituteInPlace libhb/module.defs \
+        --replace-fail "LIBHB.GCC.I += \''$(CONTRIB.build/)include/vpl" "LIBHB.GCC.I += ${libvpl}/include{/vpl,/}" \
+        --replace-fail "LIBHB.GCC.I += \''$(LOCALBASE)/include/vpl" "LIBHB.GCC.I += ${libvpl}/include{/vpl,/}"
     '';
 
     nativeBuildInputs = [
@@ -223,7 +236,9 @@ let
     buildInputs = [
       a52dec
       dav1d
-      ffmpeg-hb
+      (if useQsv then
+      (ffmpeg-hb.override { withVpl = true; withMfx = false; })
+      else ffmpeg-hb)
       fontconfig
       freetype
       fribidi
@@ -271,7 +286,8 @@ let
     ++ optionals stdenv.isDarwin [ AudioToolbox Foundation libobjc VideoToolbox ]
     # NOTE: 2018-12-27: Handbrake supports nv-codec-headers for Linux only,
     # look at ./make/configure.py search "enable_nvenc"
-    ++ optional stdenv.isLinux nv-codec-headers;
+    ++ optional stdenv.isLinux nv-codec-headers
+    ++ optionals useQsv [ libva libdrm libvpl ];
 
     configureFlags = [
       "--disable-df-fetch"
@@ -280,10 +296,11 @@ let
     ++ optional (!useGtk) "--disable-gtk"
     ++ optional useFdk "--enable-fdk-aac"
     ++ optional stdenv.isDarwin "--disable-xcode"
-    ++ optional stdenv.hostPlatform.isx86 "--harden";
+    ++ optional stdenv.hostPlatform.isx86 "--harden"
+    ++ optional useQsv "--enable-qsv";
 
     # NOTE: 2018-12-27: Check NixOS HandBrake test if changing
-    NIX_LDFLAGS = [ "-lx265" ];
+    NIX_LDFLAGS = [ "-lx265" ] ++ optional useQsv [ "-lva" "-lvpl" "-lva-drm" ];
 
     # meson/ninja are used only for the subprojects, not the toplevel
     dontUseMesonConfigure = true;
