@@ -3,6 +3,7 @@
 , src
 , extraNativeBuildInputs ? [ ]
 , extraBuildInputs ? [ ]
+, extraPatches ? [ ]
 , extraMeta ? { }
 , compileFlags ? [ ]
 , postInstall ? ""
@@ -53,6 +54,8 @@ stdenv.mkDerivation rec {
   ] ++ lib.optionals stdenv.isDarwin [
     "OSX_BUILD=1"
   ] ++ compileFlags;
+
+  patches = extraPatches;
 
   preBuild = ''
     patchShebangs extract_assets.py
