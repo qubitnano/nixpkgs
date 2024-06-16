@@ -66,7 +66,9 @@ stdenv.mkDerivation rec {
     runHook preInstall
 
     mkdir -p $out/bin
-    cp build/${region}_pc/sm64.${region}.f3dex2e $out/bin/sm64ex
+    mkdir -p $out/share/sm64ex
+    cp build/${region}_pc/sm64.${region}.f3dex2e $out/share/sm64ex/sm64ex
+    ln -s $out/share/sm64ex/sm64ex $out/bin/sm64ex
 
     runHook postInstall
   '';
