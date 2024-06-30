@@ -3,8 +3,10 @@
 , SDL2
 , callPackage
 , cmake
+, cpuinfo
 , cubeb
 , curl
+, discord-rpc
 , extra-cmake-modules
 , libXrandr
 , libbacktrace
@@ -15,6 +17,7 @@
 , qt6
 , vulkan-loader
 , wayland
+, wayland-scanner
 }:
 
 let
@@ -42,11 +45,13 @@ stdenv.mkDerivation (finalAttrs: {
     ninja
     pkg-config
     qttools
+    wayland-scanner
     wrapQtAppsHook
   ];
 
   buildInputs = [
     SDL2
+    cpuinfo
     curl
     extra-cmake-modules
     libXrandr
@@ -55,7 +60,10 @@ stdenv.mkDerivation (finalAttrs: {
     qtbase
     qtsvg
     qtwayland
+    sources.discord-rpc-patched
     sources.shaderc-patched
+    sources.soundtouch-patched
+    sources.spirv-cross-patched
     wayland
   ]
   ++ cubeb.passthru.backendLibs;
@@ -104,6 +112,8 @@ stdenv.mkDerivation (finalAttrs: {
   qtWrapperArgs =
     let
       libPath = lib.makeLibraryPath ([
+        sources.shaderc-patched
+        sources.spirv-cross-patched
         vulkan-loader
       ] ++ cubeb.passthru.backendLibs);
     in [
