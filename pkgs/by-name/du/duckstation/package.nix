@@ -61,6 +61,7 @@ stdenv.mkDerivation (finalAttrs: {
     qtsvg
     qtwayland
     sources.discord-rpc-patched
+    sources.lunasvg
     sources.shaderc-patched
     sources.soundtouch-patched
     sources.spirv-cross-patched

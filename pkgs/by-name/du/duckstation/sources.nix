@@ -15,11 +15,11 @@
   duckstation = let
     self = {
       pname = "duckstation";
-      version = "0.1-7294";
+      version = "0.1-7465";
       src = fetchFromGitHub {
         owner = "stenzek";
         repo = "duckstation";
-        rev = "refs/tags/v${self.version}";
+        rev = "aa955b8ae28314ae061613f0ddf13183a98aca03";
         #
         # Some files are filled by using Git commands; it requires deepClone.
         # More info at `checkout_ref` function in nix-prefetch-git.
@@ -41,7 +41,7 @@
           git log -1 --date=iso8601-strict --format=%cd > .nixpkgs-auxfiles/git_date
           find $out -name .git -print0 | xargs -0 rm -fr
         '';
-        hash = "sha256-E9DXFbxwXgPDbTwgTCPfjoShucKduDZ8CG8uNOc4aaw=";
+        hash = "sha256-ixrlr7Rm6GZAn/kh2sSeCCiK/qdmQ5+5jbbhAKjTx/E=";
       };
     };
   in
@@ -119,9 +119,41 @@
         rev = "463ade388f3a51da078dc9ed062bf28e4ba29da7";
         hash = "sha256-hvBW/z+fmh/itNsJnlDBtiI1DZmUMO9TpHEztjo2pA0=";
       };
+
       nativeBuildInputs = [
         cmake
         ninja
       ];
+
+      meta = {
+        homepage = "https://github.com/stenzek/soundtouch";
+        description = "SoundTouch Audio Processing Library (forked from https://codeberg.org/soundtouch/soundtouch)";
+        license = lib.licenses.lgpl21;
+        platforms = lib.platforms.linux;
+      };
+
+  });
+
+  lunasvg = stdenv.mkDerivation (finalAttrs: {
+    pname = "lunasvg-patched-for-duckstation";
+    version = "2.4.1-unstable-2024-08-24";
+    src = fetchFromGitHub {
+      owner = "stenzek";
+      repo = "lunasvg";
+      rev = "9af1ac7b90658a279b372add52d6f77a4ebb482c";
+      hash = "sha256-ZzOe84ZF5JRrJ9Lev2lwYOccqtEGcf76dyCDBDTvI2o=";
+    };
+
+    nativeBuildInputs = [
+      cmake
+      ninja
+    ];
+
+    meta = {
+      homepage = "https://github.com/stenzek/lunasvg";
+      description = "lunasvg is a standalone SVG rendering library in C++";
+      license = lib.licenses.mit;
+      platforms = lib.platforms.linux;
+    };
   });
 }
