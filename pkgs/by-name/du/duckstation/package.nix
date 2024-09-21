@@ -1,24 +1,25 @@
-{ lib
-, stdenv
-, llvmPackages
-, SDL2
-, callPackage
-, cmake
-, cpuinfo
-, cubeb
-, curl
-, discord-rpc
-, extra-cmake-modules
-, libXrandr
-, libbacktrace
-, libwebp
-, makeWrapper
-, ninja
-, pkg-config
-, qt6
-, vulkan-loader
-, wayland
-, wayland-scanner
+{
+  lib,
+  stdenv,
+  llvmPackages,
+  SDL2,
+  callPackage,
+  cmake,
+  cpuinfo,
+  cubeb,
+  curl,
+  discord-rpc,
+  extra-cmake-modules,
+  libXrandr,
+  libbacktrace,
+  libwebp,
+  makeWrapper,
+  ninja,
+  pkg-config,
+  qt6,
+  vulkan-loader,
+  wayland,
+  wayland-scanner,
 }:
 
 let
@@ -29,7 +30,7 @@ let
     qttools
     qtwayland
     wrapQtAppsHook
-  ;
+    ;
 in
 llvmPackages.stdenv.mkDerivation (finalAttrs: {
   inherit (sources.duckstation) pname version src;
@@ -67,8 +68,7 @@ llvmPackages.stdenv.mkDerivation (finalAttrs: {
     sources.soundtouch-patched
     sources.spirv-cross-patched
     wayland
-  ]
-  ++ cubeb.passthru.backendLibs;
+  ] ++ cubeb.passthru.backendLibs;
 
   cmakeFlags = [
     (lib.cmakeBool "BUILD_TESTS" true)
@@ -113,12 +113,16 @@ llvmPackages.stdenv.mkDerivation (finalAttrs: {
 
   qtWrapperArgs =
     let
-      libPath = lib.makeLibraryPath ([
-        sources.shaderc-patched
-        sources.spirv-cross-patched
-        vulkan-loader
-      ] ++ cubeb.passthru.backendLibs);
-    in [
+      libPath = lib.makeLibraryPath (
+        [
+          sources.shaderc-patched
+          sources.spirv-cross-patched
+          vulkan-loader
+        ]
+        ++ cubeb.passthru.backendLibs
+      );
+    in
+    [
       "--prefix LD_LIBRARY_PATH : ${libPath}"
     ];
 
@@ -135,7 +139,10 @@ llvmPackages.stdenv.mkDerivation (finalAttrs: {
     description = "Fast PlayStation 1 emulator for x86-64/AArch32/AArch64";
     license = lib.licenses.gpl3Only;
     mainProgram = "duckstation-qt";
-    maintainers = with lib.maintainers; [ guibou AndersonTorres ];
+    maintainers = with lib.maintainers; [
+      guibou
+      AndersonTorres
+    ];
     platforms = lib.platforms.linux;
   };
 })
