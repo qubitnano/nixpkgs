@@ -80,7 +80,7 @@ llvmPackages.stdenv.mkDerivation (finalAttrs: {
 
   postPatch = ''
     gitHash=$(cat .nixpkgs-auxfiles/git_hash) \
-    gitBranch=$(cat .nixpkgs-auxfiles/git_branch) \
+    gitBranch=NixOS \
     gitTag=$(cat .nixpkgs-auxfiles/git_tag) \
     gitDate=$(cat .nixpkgs-auxfiles/git_date) \
       substituteAllInPlace src/scmversion/gen_scmversion.sh
