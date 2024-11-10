@@ -8,7 +8,6 @@
   fetchpatch,
   fetchurl,
   imagemagick,
-  imgui,
   libpng,
   libpulseaudio,
   libzip,
@@ -20,10 +19,10 @@
   pkg-config,
   python3,
   spdlog,
-  stormlib,
   tinyxml-2,
   writeTextFile,
   zenity,
+  _2ship2harkinian,
 }:
 
 let
@@ -37,14 +36,11 @@ let
   };
 
   # 2ship needs a specific imgui version
-  imgui' = imgui.overrideAttrs rec {
-    version = "1.90.6";
-    src = fetchFromGitHub {
-      owner = "ocornut";
-      repo = "imgui";
-      rev = "v${version}-docking";
-      hash = "sha256-Y8lZb1cLJF48sbuxQ3vXq6GLru/WThR78pq7LlORIzc=";
-    };
+  imgui' = fetchFromGitHub {
+    owner = "ocornut";
+    repo = "imgui";
+    tag = "v1.90.6-docking";
+    hash = "sha256-Y8lZb1cLJF48sbuxQ3vXq6GLru/WThR78pq7LlORIzc=";
   };
 
   libgfxd = fetchFromGitHub {
@@ -68,42 +64,30 @@ let
     hash = "sha256-xUsVponmofMsdeLsI6+kQuPg436JS3PBl00IZ5sg3Vw=";
   };
 
-  # Apply 2ship's patch for stormlib
-  stormlib' = stormlib.overrideAttrs (prev: rec {
-    version = "9.25";
-    src = fetchFromGitHub {
-      owner = "ladislav-zezula";
-      repo = "StormLib";
-      rev = "v${version}";
-      hash = "sha256-HTi2FKzKCbRaP13XERUmHkJgw8IfKaRJvsK3+YxFFdc=";
-    };
-    nativeBuildInputs = prev.nativeBuildInputs ++ [ pkg-config ];
-    patches = (prev.patches or [ ]) ++ [
-      (fetchpatch {
-        name = "stormlib-optimizations.patch";
-        url = "https://github.com/briaguya-ai/StormLib/commit/ff338b230544f8b2bb68d2fbe075175ed2fd758c.patch";
-        hash = "sha256-Jbnsu5E6PkBifcx/yULMVC//ab7tszYgktS09Azs5+4=";
-      })
-    ];
-  });
+  stormlib' = fetchFromGitHub {
+    owner = "ladislav-zezula";
+    repo = "StormLib";
+    tag = "v9.25";
+    hash = "sha256-HTi2FKzKCbRaP13XERUmHkJgw8IfKaRJvsK3+YxFFdc=";
+  };
 
   thread_pool = fetchFromGitHub {
     owner = "bshoshany";
     repo = "thread-pool";
-    rev = "v4.1.0";
+    tag = "v4.1.0";
     hash = "sha256-zhRFEmPYNFLqQCfvdAaG5VBNle9Qm8FepIIIrT9sh88=";
   };
 
 in
 stdenv.mkDerivation (finalAttrs: {
   pname = "2ship2harkinian";
-  version = "1.0.2";
+  version = "1.1.2";
 
   src = fetchFromGitHub {
     owner = "HarbourMasters";
     repo = "2ship2harkinian";
     tag = finalAttrs.version;
-    hash = "sha256-1iSFzroKxwFpsIGNMetSlQKTKRWCy7QtgCTepFdSeY8=";
+    hash = "sha256-lsq2CCDOYZKYntu3B0s4PidpZ3EjyIPSSpHpmq4XN9U=";
     fetchSubmodules = true;
   };
 
@@ -125,13 +109,11 @@ stdenv.mkDerivation (finalAttrs: {
 
   buildInputs = [
     SDL2
-    imgui'
     libpng
     libpulseaudio
     libzip
     nlohmann_json
     spdlog
-    stormlib'
     tinyxml-2
     zenity
   ];
@@ -139,9 +121,9 @@ stdenv.mkDerivation (finalAttrs: {
   cmakeFlags = [
     (lib.cmakeBool "NON_PORTABLE" true)
     (lib.cmakeFeature "CMAKE_INSTALL_PREFIX" "${placeholder "out"}/2s2h")
-    (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_IMGUI" "${imgui'.src}")
+    (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_IMGUI" "/build/source/build/_deps/imgui-src")
     (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_LIBGFXD" "${libgfxd}")
-    (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_STORMLIB" "${stormlib'}")
+    (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_STORMLIB" "/build/source/build/_deps/stormlib-src")
     (lib.cmakeFeature "FETCHCONTENT_SOURCE_DIR_THREADPOOL" "${thread_pool}")
   ];
 
@@ -158,9 +140,24 @@ stdenv.mkDerivation (finalAttrs: {
     mkdir stb
     cp ${stb'} ./stb/${stb'.name}
     cp ${stb_impl} ./stb/${stb_impl.name}
-
     substituteInPlace libultraship/cmake/dependencies/common.cmake \
       --replace-fail "\''${STB_DIR}" "/build/source/stb"
+  '';
+
+  postPatch = ''
+    # use the 2ship patched deps when building
+
+    mkdir -p ./build/_deps/imgui-src
+    cp -R --no-preserve=mode,ownership ${imgui'}/* ./build/_deps/imgui-src
+    pushd ./build/_deps/imgui-src
+    patch -p1 < ${_2ship2harkinian.src}/libultraship/cmake/dependencies/patches/sdl-gamepad-fix.patch
+    popd
+
+    mkdir -p ./build/_deps/stormlib-src
+    cp -R --no-preserve=mode,ownership ${stormlib'}/* ./build/_deps/stormlib-src
+    pushd ./build/_deps/stormlib-src
+    patch -p1 < ${_2ship2harkinian.src}/libultraship/cmake/dependencies/patches/stormlib-optimizations.patch
+    popd
   '';
 
   postBuild = ''
