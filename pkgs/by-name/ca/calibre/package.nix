@@ -193,6 +193,7 @@ stdenv.mkDerivation (finalAttrs: {
         wrapProgram $program \
           ''${qtWrapperArgs[@]} \
           ''${gappsWrapperArgs[@]} \
+          --prefix PYTHONPATH : $PYTHONPATH \
           --prefix PATH : ${
             lib.makeBinPath [
               libjpeg
